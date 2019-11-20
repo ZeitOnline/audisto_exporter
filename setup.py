@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='audisto_exporter',
-    version='1.0.1',
+    version='1.1.0.dev0',
     author='Wolfgang Schnerring',
     author_email='wolfgang.schnerring@zeit.de',
     url='https://github.com/ZeitOnline/audisto_exporter',
