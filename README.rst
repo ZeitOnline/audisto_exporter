@@ -34,9 +34,12 @@ Configure Prometheus
         static_configs:
           - targets: ['localhost:9307']
 
-We export the metric ``http_requests_total`` (a gauge),
+We export two metrics, firstly a gauge ``http_requests_total``
 with labels ``{service="http://www.zeit.de/index",code="200"}``.
 Status codes 601/602/603 are used for indexable/robots noindex/canonical.
 Status codes 700/701/702/703 are used for duplicate title/description/body/similar urls.
+
+Secondly we export a histogram ``response_time``,
+with labels ``{service="http://www.zeit.de/index"}`` and buckets as determined by Audisto.
 
 Additionally, a ``audisto_scrape_duration_seconds`` gauge is exported.

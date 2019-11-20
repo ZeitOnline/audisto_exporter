@@ -28,6 +28,10 @@ class Gauge(prometheus_client.core.GaugeMetricFamily, Cloneable):
     pass
 
 
+class Histogram(prometheus_client.core.HistogramMetricFamily, Cloneable):
+    pass
+
+
 class EventCollector:
 
     _cache_value = None
@@ -42,6 +46,9 @@ class EventCollector:
         'http_requests_total': Gauge(
             'http_requests_total', 'HTTP requests',
             labels=['service', 'code']),
+        'response_time': Histogram(
+            'response_time', 'HTTP response time',
+            labels=['service']),
         'scrape_duration': Gauge(
             'audisto_scrape_duration_seconds',
             'Duration of Audisto API scrape'),
@@ -95,6 +102,35 @@ class EventCollector:
                 metrics['http_requests_total'].add_metric(
                     [service, str(700 + data['source']['id'])],
                     data['total'])
+
+            buckets = []
+            for item in report['summary_response_times']:
+                title = item['range']['value']
+                title = title.replace(' ms', '')
+                if title.startswith('>'):
+                    continue
+                low, high = title.split('-')
+                buckets.append(int(high))
+
+            count = collections.Counter()
+            for item in report['summary_response_times']:
+                title = item['range']['value']
+                title = title.replace(' ms', '')
+                if title.startswith('>'):
+                    value = INF
+                else:
+                    low, high = title.split('-')
+                    value = int(high)
+                for bucket in buckets:
+                    if value <= bucket:
+                        count[bucket] += item['count']
+                    count[INF] += item['count']
+
+            buckets = [(floatToGoString(x), count[x])
+                       for x in sorted(count.keys())]
+            # We already get bucketed values, so we don't have a total sum.
+            metrics['response_time'].add_metric(
+                [service], buckets, sum_value=0)
 
             for status in self.HTTP_STATUS:
                 report = self._request('/crawls/%s/report/httpstatus/%s' % (
