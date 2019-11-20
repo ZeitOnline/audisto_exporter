@@ -94,6 +94,11 @@ class EventCollector:
             metrics['http_requests_total'].add_metric(
                 [service], report['counters']['pages_crawled'])
 
+            for status in self.HTTP_STATUS:
+                data = self._request('/crawls/%s/report/httpstatus/%s' % (
+                    crawl['id'], status), chunk=0, chunksize=0)
+                metrics['http_requests_total'].add_metric(
+                    [service, str(status)], data['total'])
             for data in report['summary_indexable']:
                 metrics['http_requests_total'].add_metric(
                     [service, str(600 + data['value']['id'])],
@@ -131,12 +136,6 @@ class EventCollector:
             # We already get bucketed values, so we don't have a total sum.
             metrics['response_time'].add_metric(
                 [service], buckets, sum_value=0)
-
-            for status in self.HTTP_STATUS:
-                report = self._request('/crawls/%s/report/httpstatus/%s' % (
-                    crawl['id'], status), chunk=0, chunksize=0)
-                metrics['http_requests_total'].add_metric(
-                    [service, str(status)], report['total'])
 
         stop = time.time()
         metrics['scrape_duration'].add_metric((), stop - start)
