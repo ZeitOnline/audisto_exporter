@@ -87,6 +87,15 @@ class EventCollector:
             metrics['http_requests_total'].add_metric(
                 [service], report['counters']['pages_crawled'])
 
+            for data in report['summary_indexable']:
+                metrics['http_requests_total'].add_metric(
+                    [service, str(600 + data['value']['id'])],
+                    data['aggregated'])
+            for data in report['summary_duplicate_content']:
+                metrics['http_requests_total'].add_metric(
+                    [service, str(700 + data['source']['id'])],
+                    data['total'])
+
             for status in self.HTTP_STATUS:
                 report = self._request('/crawls/%s/report/httpstatus/%s' % (
                     crawl['id'], status), chunk=0, chunksize=0)

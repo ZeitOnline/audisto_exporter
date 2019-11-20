@@ -36,5 +36,7 @@ Configure Prometheus
 
 We export the metric ``http_requests_total`` (a gauge),
 with labels ``{service="http://www.zeit.de/index",code="200"}``.
+Status codes 601/602/603 are used for indexable/robots noindex/canonical.
+Status codes 700/701/702/703 are used for duplicate title/description/body/similar urls.
 
 Additionally, a ``audisto_scrape_duration_seconds`` gauge is exported.
