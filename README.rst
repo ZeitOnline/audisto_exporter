@@ -34,4 +34,7 @@ Configure Prometheus
         static_configs:
           - targets: ['localhost:9307']
 
+We export the metric ``http_requests_total`` (a gauge),
+with labels ``{service="http://www.zeit.de/index",code="200"}``.
+
 Additionally, a ``audisto_scrape_duration_seconds`` gauge is exported.

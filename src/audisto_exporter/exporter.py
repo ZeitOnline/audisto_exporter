@@ -39,10 +39,20 @@ class EventCollector:
         self.cache_ttl = cache_ttl
 
     METRICS = {
+        'http_requests_total': Gauge(
+            'http_requests_total', 'HTTP requests',
+            labels=['service', 'code']),
         'scrape_duration': Gauge(
             'audisto_scrape_duration_seconds',
             'Duration of Audisto API scrape'),
     }
+
+    HTTP_STATUS = [
+        200,
+        301, 302, 303, 307,
+        400, 401, 403, 404,
+        500, 502, 503,
+    ]
 
     def describe(self):
         return self.METRICS.values()
@@ -62,7 +72,26 @@ class EventCollector:
 
         log.info('Retrieving data from Audisto API')
 
-        # XXX nyi
+        # We assume crawls are ordered reverse chronologically
+        seen = set()
+        for crawl in self._request('/crawls/'):
+            if crawl['status']['value'] != 'Finished':
+                continue
+
+            service = crawl['settings']['starting_point']
+            if service in seen:  # We only look at the latest crawl
+                continue
+            seen.add(service)
+
+            report = self._request('/crawls/%s/report' % crawl['id'])
+            metrics['http_requests_total'].add_metric(
+                [service], report['counters']['pages_crawled'])
+
+            for status in self.HTTP_STATUS:
+                report = self._request('/crawls/%s/report/httpstatus/%s' % (
+                    crawl['id'], status), chunk=0, chunksize=0)
+                metrics['http_requests_total'].add_metric(
+                    [service, str(status)], report['total'])
 
         stop = time.time()
         metrics['scrape_duration'].add_metric((), stop - start)
